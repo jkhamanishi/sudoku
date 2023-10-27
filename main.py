@@ -15,7 +15,7 @@ grid.append([0, 0, 0, 0, 0, 0, 0, 0, 0])
 grid.append([0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 myPen = turtle.Turtle()
-myPen.tracer(0)
+turtle.tracer(0)
 myPen.speed(0)
 myPen.color("#000000")
 myPen.hideturtle()
@@ -220,3 +220,4 @@ while attempts > 0:
     myPen.getscreen().update()
 
 print("Sudoku Grid Ready")
+myPen.getscreen().mainloop()
