@@ -1,6 +1,11 @@
 import turtle
-from random import randint, shuffle
+from random import shuffle
 from time import sleep
+from copy import deepcopy
+
+
+def flatten_list_of_lists(lst):
+    return [item for sublist in lst for item in sublist]
 
 
 class DIM:
@@ -11,18 +16,107 @@ class DIM:
     CELL = 30
 
 
+class Grid:
+    def __init__(self):
+        self.data = [[0] * 9 for _ in range(9)]
+        self.generate_solved_grid()
+        self.backup = {"row": 0, "col": 0, "val": 0}
+
+    def at(self, row, col):
+        return self.data[row][col]
+
+    def empty_at(self, val_row, val_col):
+        return self.at(val_row, val_col) == 0
+
+    def set_value(self, val_row, val_col, value):
+        self.data[val_row][val_col] = value
+
+    def clear_cell(self, row, col):
+        self.set_value(row, col, 0)
+
+    def set_backup(self, row, col, value):
+        self.backup.update(row=row, col=col, val=value)
+
+    def clear_rand_cell(self):
+        filled_cells = [(row, col) for row in range(9) for col in range(9) if not self.empty_at(row, col)]
+        shuffle(filled_cells)
+        rand_cell = filled_cells[0]
+        self.set_backup(*rand_cell, self.at(*rand_cell))
+        self.clear_cell(*rand_cell)
+
+    def restore_backup(self):
+        self.set_value(self.backup.get("row"), self.backup.get("col"), self.backup.get("val"))
+
+    def row(self, val_row):
+        return self.data[val_row]
+
+    def column(self, val_col):
+        return [self.at(row, val_col) for row in range(9)]
+
+    def square(self, val_row, val_col):
+        rows = [i + (val_row // 3) * 3 for i in range(0, 3)]
+        columns = [j + (val_col // 3) * 3 for j in range(0, 3)]
+        return [[self.at(r, c) for c in columns] for r in rows]
+
+    def check_full_grid(self):
+        return 0 not in flatten_list_of_lists(self.data)
+
+    def validate_row(self, val_row, value):
+        return value not in self.row(val_row)
+
+    def validate_column(self, val_col, value):
+        return value not in self.column(val_col)
+
+    def validate_square(self, val_row, val_col, value):
+        return value not in flatten_list_of_lists(self.square(val_row, val_col))
+
+    def validate_value(self, val_row, val_col, value):
+        row_valid = self.validate_row(val_row, value)
+        column_valid = self.validate_column(val_col, value)
+        square_valid = self.validate_square(val_row, val_col, value)
+        return row_valid and column_valid and square_valid
+
+    def generate_solved_grid(self):
+        number_list = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        for row, col in [(row, col) for row in range(9) for col in range(9) if self.empty_at(row, col)]:
+            shuffle(number_list)
+            for value in number_list:
+                if self.validate_value(row, col, value):
+                    self.set_value(row, col, value)
+                    if self.check_full_grid() or self.generate_solved_grid():
+                        return True
+            break
+        self.clear_cell(row, col)
+        return False
+
+    def solve_grid(self, num_solutions=0):
+        for row, col in [(row, col) for row in range(9) for col in range(9) if self.empty_at(row, col)]:
+            for valid_value in [value for value in range(1, 10) if self.validate_value(row, col, value)]:
+                self.set_value(row, col, valid_value)
+                if self.check_full_grid():
+                    num_solutions += 1
+                    break
+                else:
+                    solved, num_solutions = self.solve_grid(num_solutions)
+                    if solved:
+                        return True, num_solutions
+            break
+        self.clear_cell(row, col)
+        return False, num_solutions
 
 
-def draw_grid(pen, grid):
+def draw_grid(pen: turtle.Turtle, grid: Grid):
     turtle.tracer(0)
     pen.speed(0)
     pen.color("#000000")
     pen.hideturtle()
 
-    def draw_text(message, x, y):
+    def draw_val(val_row, val_col):
         pen.up()
+        x = DIM.LEFT + val_col * DIM.CELL + DIM.CELL / 2
+        y = DIM.TOP - val_row * DIM.CELL - DIM.CELL * 1
         pen.goto(x, y)
-        pen.write(message, align="center", font=('Arial', 18, 'normal'))
+        pen.write(grid.at(row, col), align="center", font=('Arial', 18, 'normal'))
 
     for row in range(0, 10):
         pen.pensize(3 if (row % 3) == 0 else 1)
@@ -36,173 +130,35 @@ def draw_grid(pen, grid):
         pen.goto(DIM.LEFT + col * DIM.CELL, DIM.TOP)
         pen.down()
         pen.goto(DIM.LEFT + col * DIM.CELL, DIM.TOP - 9 * DIM.CELL)
-    for row in range(0, 9):
-        for col in range(0, 9):
-            if grid[row][col] != 0:
-                draw_text(grid[row][col], DIM.LEFT + col * DIM.CELL + DIM.CELL / 2, DIM.TOP - row * DIM.CELL - DIM.CELL)
-
-
-# A function to check if the grid is full
-def check_full_grid(grid):
-    for row in range(0, 9):
-        for col in range(0, 9):
-            if grid[row][col] == 0:
-                return False
-    return True
-
-
-# A backtracking/recursive function to check all possible combinations of numbers until a solution is found
-def solve_grid(grid, num_solutions=0):
-    # Find next empty cell
-    row = col = 0
-    for i in range(0, 81):
-        row = i // 9
-        col = i % 9
-        if grid[row][col] == 0:
-            for value in range(1, 10):
-                # Check that this value has not already be used on this row
-                if not (value in grid[row]):
-                    # Check that this value has not already be used on this column
-                    if value not in [grid[r][col] for r in range(9)]:
-                        # Identify which of the 9 squares we are working on
-                        square = []
-                        if row < 3:
-                            if col < 3:
-                                square = [grid[i][0:3] for i in range(0, 3)]
-                            elif col < 6:
-                                square = [grid[i][3:6] for i in range(0, 3)]
-                            else:
-                                square = [grid[i][6:9] for i in range(0, 3)]
-                        elif row < 6:
-                            if col < 3:
-                                square = [grid[i][0:3] for i in range(3, 6)]
-                            elif col < 6:
-                                square = [grid[i][3:6] for i in range(3, 6)]
-                            else:
-                                square = [grid[i][6:9] for i in range(3, 6)]
-                        else:
-                            if col < 3:
-                                square = [grid[i][0:3] for i in range(6, 9)]
-                            elif col < 6:
-                                square = [grid[i][3:6] for i in range(6, 9)]
-                            else:
-                                square = [grid[i][6:9] for i in range(6, 9)]
-                        # Check that this value has not already be used on this 3x3 square
-                        if not value in (square[0] + square[1] + square[2]):
-                            grid[row][col] = value
-                            if check_full_grid(grid):
-                                num_solutions += 1
-                                break
-                            else:
-                                solved, num_solutions = solve_grid(grid, num_solutions)
-                                if solved:
-                                    return True, num_solutions
-            break
-    grid[row][col] = 0
-    return False, num_solutions
-
-
-numberList = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-
-
-# A backtracking/recursive function to check all possible combinations of numbers until a solution is found
-def fill_grid(grid):
-    row = col = 0
-    # Find next empty cell
-    for i in range(0, 81):
-        row = i // 9
-        col = i % 9
-        if grid[row][col] == 0:
-            shuffle(numberList)
-            for value in numberList:
-                # Check that this value has not already be used on this row
-                if not (value in grid[row]):
-                    # Check that this value has not already be used on this column
-                    if value not in [grid[r][col] for r in range(9)]:
-                        # Identify which of the 9 squares we are working on
-                        square = []
-                        if row < 3:
-                            if col < 3:
-                                square = [grid[i][0:3] for i in range(0, 3)]
-                            elif col < 6:
-                                square = [grid[i][3:6] for i in range(0, 3)]
-                            else:
-                                square = [grid[i][6:9] for i in range(0, 3)]
-                        elif row < 6:
-                            if col < 3:
-                                square = [grid[i][0:3] for i in range(3, 6)]
-                            elif col < 6:
-                                square = [grid[i][3:6] for i in range(3, 6)]
-                            else:
-                                square = [grid[i][6:9] for i in range(3, 6)]
-                        else:
-                            if col < 3:
-                                square = [grid[i][0:3] for i in range(6, 9)]
-                            elif col < 6:
-                                square = [grid[i][3:6] for i in range(6, 9)]
-                            else:
-                                square = [grid[i][6:9] for i in range(6, 9)]
-                        # Check that this value has not already be used on this 3x3 square
-                        if not value in (square[0] + square[1] + square[2]):
-                            grid[row][col] = value
-                            if check_full_grid(grid):
-                                return True
-                            else:
-                                if fill_grid(grid):
-                                    return True
-            break
-    grid[row][col] = 0
+    for row, col in [(row, col) for row in range(9) for col in range(9) if not grid.empty_at(row, col)]:
+        draw_val(row, col)
 
 
 # Generate a Fully Solved Grid
-def generate_puzzle():
-    # initialise empty 9 by 9 grid
-    grid = [[0 for column in range(9)] for row in range(9)]
-
-    # initialize turtle
-    pen = turtle.Turtle()
-    fill_grid(grid)
+def generate_and_display_puzzle(pen: turtle.Turtle):
+    grid = Grid()
     draw_grid(pen, grid)
     pen.getscreen().update()
     sleep(1)
 
-    # Start Removing Numbers one by one
-
-    # A higher number of attempts will end up removing more numbers from the grid
-    # Potentially resulting in more difficult grids to solve!
     max_failed_attempts = 5
     failed_attempts = 0
     while failed_attempts < max_failed_attempts:
-        # Select a random cell that is not already empty
-        row = randint(0, 8)
-        col = randint(0, 8)
-        while grid[row][col] == 0:
-            row = randint(0, 8)
-            col = randint(0, 8)
-        # Remember its cell value in case we need to put it back
-        backup = grid[row][col]
-        grid[row][col] = 0
-
-        # Take a full copy of the grid
-        copy_grid = []
-        for r in range(0, 9):
-            copy_grid.append([])
-            for c in range(0, 9):
-                copy_grid[r].append(grid[r][c])
-
-        # Count the number of solutions that this grid has
-        _, num_solutions = solve_grid(copy_grid)
+        grid.clear_rand_cell()
+        grid_copy = deepcopy(grid)  # Copy the grid
+        _, num_solutions = grid_copy.solve_grid()  # Count the number of solutions
         if num_solutions != 1:
-            grid[row][col] = backup  # revert change
+            grid.restore_backup()
             failed_attempts += 1
-
-        pen.clear()
-        draw_grid(pen, grid)
-        pen.getscreen().update()
+        else:
+            pen.clear()
+            draw_grid(pen, grid)
+            pen.getscreen().update()
 
     print("Puzzle Creation Complete")
     pen.getscreen().mainloop()
 
 
-
-
+if __name__ == "__main__":
+    trtl = turtle.Turtle()
+    generate_and_display_puzzle(trtl)
