@@ -5,11 +5,11 @@ from copy import deepcopy
 
 
 class DIM:
-    LEFT = -150
-    TOP = 150
-    RIGHT = 150
-    BOTTOM = -150
     CELL = 30
+    LEFT = -CELL * 9 / 2
+    TOP = CELL * 9 / 2
+    RIGHT = CELL * 9 / 2
+    BOTTOM = -CELL * 9 / 2
 
 
 class DIFFICULTY:
@@ -17,12 +17,25 @@ class DIFFICULTY:
         self.max_failed_attempts = max_failed_attempts
         self.min_num_hints = min_num_hints
 
+    @staticmethod
+    def estimate(num_hints):
+        if num_hints >= 45:
+            return "BEGINNER"
+        elif num_hints >= 40:
+            return "EASY"
+        elif num_hints >= 35:
+            return "NORMAL"
+        elif num_hints >= 30:
+            return "HARD"
+        else:
+            return "EXPERT"
+
 
 BEGINNER = DIFFICULTY(1, 45)
 EASY = DIFFICULTY(3, 40)
 NORMAL = DIFFICULTY(5, 35)
-HARD = DIFFICULTY(7, 30)
-EXPERT = DIFFICULTY(9, 17)
+HARD = DIFFICULTY(10, 30)
+EXPERT = DIFFICULTY(18, 17)
 
 
 def flatten_list_of_lists(lst):
@@ -139,6 +152,12 @@ class Grid:
         return False, num_solutions
 
 
+def write_text(pen: turtle.Turtle, message, x, y, align="left", font_size=18):
+    pen.up()
+    pen.goto(x, y)
+    pen.write(message, align=align, font=('Arial', font_size, 'normal'))
+
+
 def draw_grid(pen: turtle.Turtle, grid: Grid):
     turtle.tracer(0)
     pen.speed(0)
@@ -146,11 +165,9 @@ def draw_grid(pen: turtle.Turtle, grid: Grid):
     pen.hideturtle()
 
     def draw_val(val_row, val_col):
-        pen.up()
         x = DIM.LEFT + val_col * DIM.CELL + DIM.CELL / 2
         y = DIM.TOP - val_row * DIM.CELL - DIM.CELL * 1
-        pen.goto(x, y)
-        pen.write(grid.at(row, col), align="center", font=('Arial', 18, 'normal'))
+        write_text(pen, grid.at(row, col), x, y, align="center")
 
     for row in range(0, 10):
         pen.pensize(3 if (row % 3) == 0 else 1)
@@ -185,16 +202,18 @@ def generate_and_display_puzzle(difficulty: DIFFICULTY):
         if num_solutions != 1:
             grid.restore_backup()
             failed_attempts += 1
+            print("failed attempt", failed_attempts)
         else:
             num_hints = grid.get_num_hints()
             pen.clear()
             draw_grid(pen, grid)
+            write_text(pen, "Difficulty: " + difficulty.estimate(num_hints), DIM.LEFT, DIM.TOP + 8, font_size=8)
             pen.getscreen().update()
 
-    print("Puzzle Creation Complete")
-    print("Number of hints:", grid.get_num_hints())
+    write_text(pen, "Puzzle generation complete", DIM.RIGHT, DIM.BOTTOM - 20, align="right", font_size=8)
+    print("Number of hints:", num_hints)
     pen.getscreen().mainloop()
 
 
 if __name__ == "__main__":
-    generate_and_display_puzzle(EXPERT)
+    generate_and_display_puzzle(NORMAL)
