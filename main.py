@@ -1,21 +1,22 @@
-from tkinter import Tk, Button, Label
+from tkinter import Tk, ttk
 
 root = Tk()  # create parent window
+root.title("Tab Widget")
+tabControl = ttk.Notebook(root)
 
-# use Button and Label widgets to create a simple TV remote
-turn_on = Button(root, text="ON")
+tab1 = ttk.Frame(tabControl)
+tab2 = ttk.Frame(tabControl)
+tabControl.add(tab1, text='Generate')
+tabControl.add(tab2, text='Import')
+tabControl.pack(expand=1, fill="both")
+
+turn_on = ttk.Button(tab1, text="ON")
 turn_on.pack()
-
-turn_off = Button(root, text="OFF", command=root.quit)
+turn_off = ttk.Button(tab1, text="OFF", command=root.quit)
 turn_off.pack()
 
-volume = Label(root, text="VOLUME")
-volume.pack()
-
-vol_up = Button(root, text="+")
-vol_up.pack()
-
-vol_down = Button(root, text="-")
-vol_down.pack()
+# ttk.Label(tab1, text="Welcome to GeeksForGeeks").grid(column=0, row=0, padx=30, pady=30)
+ttk.Label(tab2, text="Lets dive into the world of computers").grid(column=0, row=0, padx=30, pady=30)
 
 root.mainloop()
+
