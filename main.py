@@ -4,16 +4,16 @@ from time import sleep
 from copy import deepcopy
 
 
-def flatten_list_of_lists(lst):
-    return [item for sublist in lst for item in sublist]
-
-
 class DIM:
     LEFT = -150
     TOP = 150
     RIGHT = 150
     BOTTOM = -150
     CELL = 30
+
+
+def flatten_list_of_lists(lst):
+    return [item for sublist in lst for item in sublist]
 
 
 class Grid:
