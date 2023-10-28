@@ -38,7 +38,21 @@ class Grid:
         self.backup.update(row=row, col=col, val=value)
 
     def clear_rand_cell(self):
+        # Include list of all filled cells
         filled_cells = [(row, col) for row in range(9) for col in range(9) if not self.empty_at(row, col)]
+        # Add another entry for cells in rows with more than 6 filled cells
+        for row_num in range(9):
+            row = [(row_num, col_num) for col_num in range(9) if not self.empty_at(row_num, col_num)]
+            filled_cells.extend(row) if len(row) > 6 else None
+        # Add another entry for cells in columns with more than 6 filled cells
+        for col_num in range(9):
+            column = [(row_num, col_num) for row_num in range(9) if not self.empty_at(row_num, col_num)]
+            filled_cells.extend(column) if len(column) > 6 else None
+        # Add another entry for cells in 3x3 squares with more than 6 filled cells
+        for x, y in [(x, y) for x in range(3) for y in range(3)]:
+            square_cells = [(i + x * 3, j + y * 3) for i in range(3) for j in range(3)]
+            filled_square_cells = [(rn, cn) for rn, cn in square_cells if self.empty_at(rn, cn)]
+            filled_cells.extend(filled_square_cells) if len(filled_square_cells) > 6 else None
         shuffle(filled_cells)
         rand_cell = filled_cells[0]
         self.set_backup(*rand_cell, self.at(*rand_cell))
