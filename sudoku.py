@@ -60,8 +60,17 @@ class Grid:
     def clear_cell(self, row, col):
         self.set_value(row, col, 0)
 
+    def get_first_empty_cell(self):
+        for row in range(9):
+            for column in range(9):
+                if self.empty_at(row, column):
+                    return row, column
+
     def set_backup(self, row, col, value):
         self.backup.update(row=row, col=col, val=value)
+
+    def restore_backup(self):
+        self.set_value(self.backup.get("row"), self.backup.get("col"), self.backup.get("val"))
 
     def clear_rand_cell(self):
         # Include list of all filled cells
@@ -84,9 +93,6 @@ class Grid:
         rand_cell = filled_cells[0]
         self.set_backup(*rand_cell, self.at(*rand_cell))
         self.clear_cell(*rand_cell)
-
-    def restore_backup(self):
-        self.set_value(self.backup.get("row"), self.backup.get("col"), self.backup.get("val"))
 
     def row(self, val_row):
         return self.data[val_row]
@@ -122,33 +128,31 @@ class Grid:
 
     def generate_solved_grid(self):
         number_list = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-        for row, col in [(row, col) for row in range(9) for col in range(9) if self.empty_at(row, col)]:
-            shuffle(number_list)
-            for value in number_list:
-                if self.validate_value(row, col, value):
-                    self.set_value(row, col, value)
-                    if self.check_full_grid() or self.generate_solved_grid():
-                        return True
-            break
-        self.clear_cell(row, col)
+        shuffle(number_list)
+        location = self.get_first_empty_cell()
+        for value in number_list:
+            if self.validate_value(*location, value):
+                self.set_value(*location, value)
+                if self.check_full_grid() or self.generate_solved_grid():
+                    return True
+        self.clear_cell(*location)
         return False
 
     def solve_grid(self, num_solutions=0):
-        for row, col in [(row, col) for row in range(9) for col in range(9) if self.empty_at(row, col)]:
-            for valid_value in [value for value in range(1, 10) if self.validate_value(row, col, value)]:
-                self.set_value(row, col, valid_value)
-                if self.check_full_grid():
-                    num_solutions += 1
-                    if num_solutions > 1:
-                        return True, num_solutions
-                    else:
-                        break
+        location = self.get_first_empty_cell()
+        for valid_value in [value for value in range(1, 10) if self.validate_value(*location, value)]:
+            self.set_value(*location, valid_value)
+            if self.check_full_grid():
+                num_solutions += 1
+                if num_solutions > 1:
+                    return True, num_solutions
                 else:
-                    solved, num_solutions = self.solve_grid(num_solutions)
-                    if solved:
-                        return True, num_solutions
-            break
-        self.clear_cell(row, col)
+                    break
+            else:
+                solved, num_solutions = self.solve_grid(num_solutions)
+                if solved:
+                    return True, num_solutions
+        self.clear_cell(*location)
         return False, num_solutions
 
 
