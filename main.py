@@ -12,6 +12,19 @@ class DIM:
     CELL = 30
 
 
+class DIFFICULTY:
+    def __init__(self, max_failed_attempts, min_num_hints):
+        self.max_failed_attempts = max_failed_attempts
+        self.min_num_hints = min_num_hints
+
+
+BEGINNER = DIFFICULTY(1, 45)
+EASY = DIFFICULTY(3, 40)
+NORMAL = DIFFICULTY(5, 35)
+HARD = DIFFICULTY(7, 30)
+EXPERT = DIFFICULTY(9, 17)
+
+
 def flatten_list_of_lists(lst):
     return [item for sublist in lst for item in sublist]
 
@@ -74,6 +87,9 @@ class Grid:
 
     def check_full_grid(self):
         return 0 not in flatten_list_of_lists(self.data)
+
+    def get_num_hints(self):
+        return len([val for val in flatten_list_of_lists(self.data) if val != 0])
 
     def validate_row(self, val_row, value):
         return value not in self.row(val_row)
@@ -149,15 +165,16 @@ def draw_grid(pen: turtle.Turtle, grid: Grid):
 
 
 # Generate a Fully Solved Grid
-def generate_and_display_puzzle(pen: turtle.Turtle):
+def generate_and_display_puzzle(difficulty: DIFFICULTY):
     grid = Grid()
+    pen = turtle.Turtle()
     draw_grid(pen, grid)
     pen.getscreen().update()
     sleep(1)
 
-    max_failed_attempts = 5
     failed_attempts = 0
-    while failed_attempts < max_failed_attempts:
+    num_hints = 81
+    while failed_attempts < difficulty.max_failed_attempts and num_hints > difficulty.min_num_hints:
         grid.clear_rand_cell()
         grid_copy = deepcopy(grid)  # Copy the grid
         _, num_solutions = grid_copy.solve_grid()  # Count the number of solutions
@@ -165,14 +182,15 @@ def generate_and_display_puzzle(pen: turtle.Turtle):
             grid.restore_backup()
             failed_attempts += 1
         else:
+            num_hints = grid.get_num_hints()
             pen.clear()
             draw_grid(pen, grid)
             pen.getscreen().update()
 
     print("Puzzle Creation Complete")
+    print("Number of hints:", grid.get_num_hints())
     pen.getscreen().mainloop()
 
 
 if __name__ == "__main__":
-    trtl = turtle.Turtle()
-    generate_and_display_puzzle(trtl)
+    generate_and_display_puzzle(EXPERT)
