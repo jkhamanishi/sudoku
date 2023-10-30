@@ -1,4 +1,4 @@
-import turtle
+from turtle import Turtle
 from random import shuffle
 from time import sleep
 from copy import deepcopy
@@ -156,23 +156,19 @@ class Grid:
         return False, num_solutions
 
 
-def write_text(pen: turtle.Turtle, message, x, y, align="left", font_size=18):
+def write_text(pen: Turtle, message, x, y, align="left", font_size=18):
     pen.up()
     pen.goto(x, y)
     pen.write(message, align=align, font=('Arial', font_size, 'normal'))
 
 
-def draw_grid(pen: turtle.Turtle, grid: Grid):
-    turtle.tracer(0)
-    pen.speed(0)
-    pen.color("#000000")
-    pen.hideturtle()
-
+def draw_grid(pen: Turtle, grid: Grid):
     def draw_val(val_row, val_col):
         x = DIM.LEFT + val_col * DIM.CELL + DIM.CELL / 2
         y = DIM.TOP - val_row * DIM.CELL - DIM.CELL * 1
         write_text(pen, grid.at(row, col), x, y, align="center")
 
+    pen.clear()
     for row in range(0, 10):
         pen.pensize(3 if (row % 3) == 0 else 1)
         pen.up()
@@ -187,37 +183,48 @@ def draw_grid(pen: turtle.Turtle, grid: Grid):
         pen.goto(DIM.LEFT + col * DIM.CELL, DIM.TOP - 9 * DIM.CELL)
     for row, col in [(row, col) for row in range(9) for col in range(9) if not grid.empty_at(row, col)]:
         draw_val(row, col)
-
-
-# Generate a Fully Solved Grid
-def generate_and_display_puzzle(difficulty: DIFFICULTY):
-    grid = Grid()
-    pen = turtle.Turtle()
-    draw_grid(pen, grid)
+    write_text(pen, "Difficulty: " + DIFFICULTY.estimate(grid.get_num_hints()), DIM.LEFT, DIM.TOP + 8, font_size=8)
     pen.getscreen().update()
+
+
+# Generate a fully solved puzzle
+def generate_puzzle(pen: Turtle, difficulty: DIFFICULTY):
+    grid = Grid()
+    draw_grid(pen, grid)
     sleep(1)
 
     failed_attempts = 0
     num_hints = 81
     while failed_attempts < difficulty.max_failed_attempts and num_hints > difficulty.min_num_hints:
         grid.clear_rand_cell()
-        grid_copy = deepcopy(grid)  # Copy the grid
-        _, num_solutions = grid_copy.solve_grid()  # Count the number of solutions
+        grid_copy = deepcopy(grid)
+        _, num_solutions = grid_copy.solve_grid()
         if num_solutions != 1:
             grid.restore_backup()
             failed_attempts += 1
             print("failed attempt", failed_attempts)
         else:
             num_hints = grid.get_num_hints()
-            pen.clear()
             draw_grid(pen, grid)
-            write_text(pen, "Difficulty: " + difficulty.estimate(num_hints), DIM.LEFT, DIM.TOP + 8, font_size=8)
-            pen.getscreen().update()
 
-    write_text(pen, "Puzzle generation complete", DIM.RIGHT, DIM.BOTTOM - 20, align="right", font_size=8)
     print("Number of hints:", num_hints)
+    print("Puzzle generation complete")
+
+
+def turtle_setup(pen: Turtle):
+    pen.getscreen().tracer(0)
+    pen.speed(0)
+    pen.color("black")
+    pen.hideturtle()
+
+
+def animate_puzzle_generation():
+    pen = Turtle()
+    turtle_setup(pen)
+    generate_puzzle(pen, NORMAL)
     pen.getscreen().mainloop()
 
 
+# Run this file for Turtle only
 if __name__ == "__main__":
-    generate_and_display_puzzle(NORMAL)
+    animate_puzzle_generation()
