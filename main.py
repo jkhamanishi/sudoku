@@ -1,22 +1,35 @@
-from tkinter import Tk, ttk
+import tkinter as tk
+from tkinter.ttk import Notebook
+from generator_interface import GenerationTab
+from solver_interface import SolveTab
+import sudoku
 
-root = Tk()  # create parent window
-root.title("Tab Widget")
-tabControl = ttk.Notebook(root)
 
-tab1 = ttk.Frame(tabControl)
-tab2 = ttk.Frame(tabControl)
-tabControl.add(tab1, text='Generate')
-tabControl.add(tab2, text='Import')
-tabControl.pack(expand=1, fill="both")
+class MainWindow(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Sudoku Generator & Solver")
+        self.grid = sudoku.Grid()
+        self.tab_control = Tabs(self, self.grid)
+        self.tab_control.generation_tab.generate_puzzle()
 
-turn_on = ttk.Button(tab1, text="ON")
-turn_on.pack()
-turn_off = ttk.Button(tab1, text="OFF", command=root.quit)
-turn_off.pack()
 
-# ttk.Label(tab1, text="Welcome to GeeksForGeeks").grid(column=0, row=0, padx=30, pady=30)
-ttk.Label(tab2, text="Lets dive into the world of computers").grid(column=0, row=0, padx=30, pady=30)
+class Tabs(Notebook):
+    def __init__(self, root: MainWindow, grid: sudoku.Grid):
+        super().__init__(root)
+        self.generation_tab = GenerationTab(self, grid)
+        self.add(self.generation_tab, text='Generate')
+        self.solve_tab = SolveTab(self, grid)
+        self.add(self.solve_tab, text='Solve')
+        self.pack()
+        self.generation_tab.export.solve.bind("<Button>", self.solve_generated_puzzle)
 
-root.mainloop()
+    def solve_generated_puzzle(self, _):
+        self.select(self.solve_tab)
+        self.solve_tab.grid = self.generation_tab.grid
+        self.solve_tab.solve()
 
+
+if __name__ == "__main__":
+    window = MainWindow()
+    window.mainloop()

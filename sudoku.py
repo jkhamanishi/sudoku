@@ -1,7 +1,12 @@
-from turtle import Turtle
+from tkinter import Canvas, filedialog
+from turtle import Turtle, RawTurtle
 from random import shuffle
-from time import sleep
+from time import time
 from copy import deepcopy
+import csv
+
+
+MAX_GENERATION_TIME = 10  # seconds
 
 
 class DIM:
@@ -31,11 +36,11 @@ class DIFFICULTY:
             return "EXPERT"
 
 
-BEGINNER = DIFFICULTY(1, 45)
-EASY = DIFFICULTY(3, 40)
+BEGINNER = DIFFICULTY(5, 45)
+EASY = DIFFICULTY(5, 40)
 NORMAL = DIFFICULTY(5, 35)
 HARD = DIFFICULTY(10, 30)
-EXPERT = DIFFICULTY(18, 17)
+EXPERT = DIFFICULTY(20, 17)
 
 
 def flatten_list_of_lists(lst):
@@ -138,31 +143,55 @@ class Grid:
         self.clear_cell(*location)
         return False
 
-    def solve_grid(self, num_solutions=0):
+    def solve_grid(self, num_solutions=0, get_first_solution=False):
         location = self.get_first_empty_cell()
         for valid_value in [value for value in range(1, 10) if self.validate_value(*location, value)]:
             self.set_value(*location, valid_value)
             if self.check_full_grid():
                 num_solutions += 1
-                if num_solutions > 1:
+                if num_solutions > 1 or get_first_solution:
                     return True, num_solutions
                 else:
                     break
             else:
-                solved, num_solutions = self.solve_grid(num_solutions)
+                solved, num_solutions = self.solve_grid(num_solutions, get_first_solution)
                 if solved:
                     return True, num_solutions
         self.clear_cell(*location)
         return False, num_solutions
 
+    def get_number_of_solutions(self):
+        _, num_solutions = self.solve_grid()
+        return num_solutions
 
-def write_text(pen: Turtle, message, x, y, align="left", font_size=18):
+    def save_data(self):
+        filename = filedialog.asksaveasfilename(initialfile="sudoku_export.csv",
+                                                defaultextension=".csv",
+                                                filetypes=[("CSV (Comma delimited)", "*.csv")])
+        with open(filename, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerows(self.data)
+
+    def csv_to_data(self):
+        filename = filedialog.askopenfilename(filetypes=[("CSV (Comma delimited)", "*.csv")])
+        with open(filename, 'r') as file:
+            csv_reader = csv.reader(file)
+            self.data = [list(map(int, rec)) for rec in csv_reader]
+
+
+class SudokuCanvas(Canvas):
+    def __init__(self, master):
+        super().__init__(master, background="white", height=DIM.CELL*11, width=DIM.CELL*11)
+        self.pack(side="top")
+
+
+def write_text(pen: RawTurtle, message, x, y, align="left", font_size=18):
     pen.up()
     pen.goto(x, y)
     pen.write(message, align=align, font=('Arial', font_size, 'normal'))
 
 
-def draw_grid(pen: Turtle, grid: Grid):
+def draw_grid(pen: RawTurtle, grid: Grid, show_difficulty: bool = True):
     def draw_val(val_row, val_col):
         x = DIM.LEFT + val_col * DIM.CELL + DIM.CELL / 2
         y = DIM.TOP - val_row * DIM.CELL - DIM.CELL * 1
@@ -183,39 +212,45 @@ def draw_grid(pen: Turtle, grid: Grid):
         pen.goto(DIM.LEFT + col * DIM.CELL, DIM.TOP - 9 * DIM.CELL)
     for row, col in [(row, col) for row in range(9) for col in range(9) if not grid.empty_at(row, col)]:
         draw_val(row, col)
-    write_text(pen, "Difficulty: " + DIFFICULTY.estimate(grid.get_num_hints()), DIM.LEFT, DIM.TOP + 8, font_size=8)
+    if show_difficulty:
+        write_text(pen, "Difficulty: " + DIFFICULTY.estimate(grid.get_num_hints()), DIM.LEFT, DIM.TOP + 8, font_size=8)
     pen.getscreen().update()
 
 
 # Generate a fully solved puzzle
-def generate_puzzle(pen: Turtle, difficulty: DIFFICULTY):
+def generate_puzzle(pen: RawTurtle, difficulty: DIFFICULTY):
     grid = Grid()
     draw_grid(pen, grid)
-    sleep(1)
 
+    tic = toc = time()
     failed_attempts = 0
     num_hints = 81
-    while failed_attempts < difficulty.max_failed_attempts and num_hints > difficulty.min_num_hints:
+    while failed_attempts < difficulty.max_failed_attempts \
+            and num_hints > difficulty.min_num_hints \
+            and toc - tic < MAX_GENERATION_TIME:
         grid.clear_rand_cell()
         grid_copy = deepcopy(grid)
-        _, num_solutions = grid_copy.solve_grid()
-        if num_solutions != 1:
+        if grid_copy.get_number_of_solutions() != 1:
             grid.restore_backup()
             failed_attempts += 1
             print("failed attempt", failed_attempts)
         else:
             num_hints = grid.get_num_hints()
             draw_grid(pen, grid)
-
+        toc = time()
+    if toc - tic > MAX_GENERATION_TIME:
+        print("Timed out.")
     print("Number of hints:", num_hints)
     print("Puzzle generation complete")
+    return grid
 
 
-def turtle_setup(pen: Turtle):
+def turtle_setup(pen: RawTurtle):
     pen.getscreen().tracer(0)
     pen.speed(0)
     pen.color("black")
     pen.hideturtle()
+    pen.getscreen().update()
 
 
 def animate_puzzle_generation():
