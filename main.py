@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter.ttk import Notebook
+from tkinter.ttk import Notebook, Style
 from generator_interface import GenerationTab
 from solver_interface import SolveTab
 import sudoku
@@ -9,6 +9,7 @@ class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Sudoku Generator & Solver")
+        Style().theme_use("alt")
         self.grid = sudoku.Grid()
         self.tab_control = Tabs(self, self.grid)
         self.tab_control.generation_tab.generate_puzzle()
