@@ -10,8 +10,8 @@ class SolveTab(Frame):
         super().__init__(master_tabs, padding=10)
         self.grid = grid
         self.inputs = Inputs(self)
-        self.inputs.import_button.bind("<Button>", self.import_file)
-        self.inputs.solve_button.bind("<Button>", self.solve)
+        self.inputs.import_button.bind("<ButtonRelease>", self.import_file)
+        self.inputs.solve_button.bind("<ButtonRelease>", self.solve)
         self.canvas = sudoku.SudokuCanvas(self)
         self.pen = RawTurtle(self.canvas)
         sudoku.turtle_setup(self.pen)

@@ -23,7 +23,7 @@ class Tabs(Notebook):
         self.solve_tab = SolveTab(self, grid)
         self.add(self.solve_tab, text='Solve')
         self.pack()
-        self.generation_tab.export.solve.bind("<Button>", self.solve_generated_puzzle)
+        self.generation_tab.export.solve.bind("<ButtonRelease>", self.solve_generated_puzzle)
 
     def solve_generated_puzzle(self, _):
         self.select(self.solve_tab)

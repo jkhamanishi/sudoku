@@ -9,13 +9,13 @@ class GenerationTab(Frame):
         super().__init__(master_tabs, padding=10)
         self.grid = grid
         self.inputs = Inputs(self)
-        self.inputs.generate_button.bind("<Button>", self.generate_puzzle)
+        self.inputs.generate_button.bind("<ButtonRelease>", self.generate_puzzle)
         self.canvas = sudoku.SudokuCanvas(self)
         self.status_label = GenerationStatusLabel(self)
         self.pen = RawTurtle(self.canvas)
         sudoku.turtle_setup(self.pen)
         self.export = Export(self)
-        self.export.csv.bind("<Button>", self.export_puzzle)
+        self.export.csv.bind("<ButtonRelease>", self.export_puzzle)
 
     def generate_puzzle(self, _=None):
         self.status_label.status.set("Status: Generating...")
