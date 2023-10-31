@@ -169,15 +169,17 @@ class Grid:
         filename = filedialog.asksaveasfilename(initialfile="sudoku_export.csv",
                                                 defaultextension=".csv",
                                                 filetypes=[("CSV (Comma delimited)", "*.csv")])
-        with open(filename, 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerows(self.data)
+        if filename:
+            with open(filename, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerows(self.data)
 
     def csv_to_data(self):
         filename = filedialog.askopenfilename(filetypes=[("CSV (Comma delimited)", "*.csv")])
-        with open(filename, 'r') as file:
-            csv_reader = csv.reader(file)
-            self.data = [list(map(int, rec)) for rec in csv_reader]
+        if filename:
+            with open(filename, 'r') as file:
+                csv_reader = csv.reader(file)
+                self.data = [list(map(int, rec)) for rec in csv_reader]
 
 
 class SudokuCanvas(Canvas):
