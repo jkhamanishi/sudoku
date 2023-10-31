@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter.ttk import Notebook, Frame, Label, Button, OptionMenu
 from turtle import RawTurtle
 import sudoku
-from sudoku import BEGINNER, EASY, NORMAL, HARD, EXPERT
 
 
 class GenerationTab(Frame):
@@ -43,13 +42,12 @@ class DifficultyMenu(OptionMenu):
     def __init__(self, master):
         self.options = ["Beginner", "Easy", "Normal", "Hard", "Expert"]
         self.value = tk.StringVar(value="Normal")
-        self.difficulty = NORMAL
+        self.difficulty = sudoku.NORMAL
         super().__init__(master, self.value, None, *self.options, command=self.set_difficulty)
 
     def set_difficulty(self, _):
         index = [i for i, s in enumerate(self.options) if s == self.value.get()][0]
-        difficulty_list = [BEGINNER, EASY, NORMAL, HARD, EXPERT]
-        self.difficulty = difficulty_list[index]
+        self.difficulty = sudoku.DIFFICULTY_OPTIONS[index]
 
 
 class GenerationStatusLabel(Frame):
