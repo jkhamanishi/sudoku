@@ -8,11 +8,16 @@ import sudoku
 class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Sudoku Generator & Solver")
-        Style().theme_use("alt")
-        self.grid = sudoku.Grid()
-        self.tab_control = Tabs(self, self.grid)
-        self.tab_control.generation_tab.generate_puzzle()
+        try:
+            with open(".replit"):
+                self.attributes('-fullscreen', True)
+        except FileNotFoundError:
+            self.title("Sudoku Generator & Solver")
+        finally:
+            Style().theme_use("alt")
+            self.grid = sudoku.Grid()
+            self.tab_control = Tabs(self, self.grid)
+            self.tab_control.generation_tab.generate_puzzle()
 
 
 class Tabs(Notebook):
