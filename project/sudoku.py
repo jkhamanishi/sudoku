@@ -6,7 +6,7 @@ from copy import deepcopy
 import csv
 
 
-MAX_GENERATION_TIME = 10  # seconds
+MAX_GENERATION_TIME = 8  # seconds
 
 
 class DIM:
