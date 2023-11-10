@@ -1,5 +1,5 @@
 from tkinter import Canvas, filedialog
-from turtle import Turtle, RawTurtle
+from turtle import RawTurtle, Screen
 from random import shuffle
 from time import time
 from copy import deepcopy
@@ -188,81 +188,76 @@ class SudokuCanvas(Canvas):
         self.pack(side="top")
 
 
-def write_text(pen: RawTurtle, message, x, y, align="left", font_size=18):
-    pen.up()
-    pen.goto(x, y)
-    pen.write(message, align=align, font=('Arial', font_size, 'normal'))
+class SudokuPen(RawTurtle):
+    def __init__(self, canvas):
+        super().__init__(canvas)
+        self.getscreen().tracer(0)
+        self.speed(0)
+        self.color("black")
+        self.hideturtle()
+        self.getscreen().update()
 
+    def write_text(self, message, x, y, align="left", font_size=18):
+        self.up()
+        self.goto(x, y)
+        self.write(message, align=align, font=('Arial', font_size, 'normal'))
 
-def draw_grid(pen: RawTurtle, grid: Grid, show_difficulty: bool = True):
-    def draw_val(val_row, val_col):
-        x = DIM.LEFT + val_col * DIM.CELL + DIM.CELL / 2
-        y = DIM.TOP - val_row * DIM.CELL - DIM.CELL * 1
-        write_text(pen, grid.at(row, col), x, y, align="center")
+    def draw_grid(self, grid: Grid, show_difficulty: bool = True):
+        def draw_val(val_row, val_col):
+            x = DIM.LEFT + val_col * DIM.CELL + DIM.CELL / 2
+            y = DIM.TOP - val_row * DIM.CELL - DIM.CELL * 1
+            self.write_text(grid.at(row, col), x, y, align="center")
 
-    pen.clear()
-    for row in range(0, 10):
-        pen.pensize(3 if (row % 3) == 0 else 1)
-        pen.up()
-        pen.goto(DIM.LEFT, DIM.TOP - row * DIM.CELL)
-        pen.down()
-        pen.goto(DIM.LEFT + 9 * DIM.CELL, DIM.TOP - row * DIM.CELL)
-    for col in range(0, 10):
-        pen.pensize(3 if (col % 3) == 0 else 1)
-        pen.up()
-        pen.goto(DIM.LEFT + col * DIM.CELL, DIM.TOP)
-        pen.down()
-        pen.goto(DIM.LEFT + col * DIM.CELL, DIM.TOP - 9 * DIM.CELL)
-    for row, col in [(row, col) for row in range(9) for col in range(9) if not grid.empty_at(row, col)]:
-        draw_val(row, col)
-    if show_difficulty:
-        write_text(pen, "Difficulty: " + DIFFICULTY.estimate(grid.get_num_hints()), DIM.LEFT, DIM.TOP + 8, font_size=8)
-    pen.getscreen().update()
+        self.clear()
+        for row in range(0, 10):
+            self.pensize(3 if (row % 3) == 0 else 1)
+            self.up()
+            self.goto(DIM.LEFT, DIM.TOP - row * DIM.CELL)
+            self.down()
+            self.goto(DIM.LEFT + 9 * DIM.CELL, DIM.TOP - row * DIM.CELL)
+        for col in range(0, 10):
+            self.pensize(3 if (col % 3) == 0 else 1)
+            self.up()
+            self.goto(DIM.LEFT + col * DIM.CELL, DIM.TOP)
+            self.down()
+            self.goto(DIM.LEFT + col * DIM.CELL, DIM.TOP - 9 * DIM.CELL)
+        for row, col in [(row, col) for row in range(9) for col in range(9) if not grid.empty_at(row, col)]:
+            draw_val(row, col)
+        if show_difficulty:
+            self.write_text("Difficulty: "+DIFFICULTY.estimate(grid.get_num_hints()), DIM.LEFT, DIM.TOP+8, font_size=8)
+        self.getscreen().update()
 
+    # Generate a fully solved puzzle
+    def generate_puzzle(self, difficulty: DIFFICULTY):
+        grid = Grid()
+        self.draw_grid(grid)
 
-# Generate a fully solved puzzle
-def generate_puzzle(pen: RawTurtle, difficulty: DIFFICULTY):
-    grid = Grid()
-    draw_grid(pen, grid)
-
-    tic = toc = time()
-    failed_attempts = 0
-    num_hints = 81
-    while failed_attempts < difficulty.max_failed_attempts \
-            and num_hints > difficulty.min_num_hints \
-            and toc - tic < MAX_GENERATION_TIME:
-        grid.clear_rand_cell()
-        grid_copy = deepcopy(grid)
-        if grid_copy.get_number_of_solutions() != 1:
-            grid.restore_backup()
-            failed_attempts += 1
-            print("failed attempt", failed_attempts)
-        else:
-            num_hints = grid.get_num_hints()
-            draw_grid(pen, grid)
-        toc = time()
-    if toc - tic > MAX_GENERATION_TIME:
-        print("Timed out.")
-    print("Number of hints:", num_hints)
-    print("Puzzle generation complete")
-    return grid
-
-
-def turtle_setup(pen: RawTurtle):
-    pen.getscreen().tracer(0)
-    pen.speed(0)
-    pen.color("black")
-    pen.hideturtle()
-    pen.getscreen().update()
-
-
-def animate_puzzle_generation():
-    pen = Turtle()
-    turtle_setup(pen)
-    generate_puzzle(pen, NORMAL)
-    pen.getscreen().mainloop()
+        tic = toc = time()
+        failed_attempts = 0
+        num_hints = 81
+        while failed_attempts < difficulty.max_failed_attempts \
+                and num_hints > difficulty.min_num_hints \
+                and toc - tic < MAX_GENERATION_TIME:
+            grid.clear_rand_cell()
+            grid_copy = deepcopy(grid)
+            if grid_copy.get_number_of_solutions() != 1:
+                grid.restore_backup()
+                failed_attempts += 1
+                print("failed attempt", failed_attempts)
+            else:
+                num_hints = grid.get_num_hints()
+                self.draw_grid(grid)
+            toc = time()
+        if toc - tic > MAX_GENERATION_TIME:
+            print("Timed out.")
+        print("Number of hints:", num_hints)
+        print("Puzzle generation complete")
+        return grid
 
 
 # Run this file for Turtle only
 if __name__ == "__main__":
-    animate_puzzle_generation()
+    screen = Screen()
+    pen = SudokuPen(screen)
+    pen.generate_puzzle(NORMAL)
+    screen.mainloop()

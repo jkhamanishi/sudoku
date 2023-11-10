@@ -1,7 +1,5 @@
 import tkinter as tk
-import tkinter.filedialog as fd
 from tkinter.ttk import Notebook, Frame, Label, Button
-from turtle import RawTurtle
 import sudoku
 
 
@@ -13,11 +11,10 @@ class SolveTab(Frame):
         self.inputs.import_button.bind("<ButtonRelease>", self.import_file)
         self.inputs.solve_button.bind("<ButtonRelease>", self.solve)
         self.canvas = sudoku.SudokuCanvas(self)
-        self.pen = RawTurtle(self.canvas)
-        sudoku.turtle_setup(self.pen)
+        self.pen = sudoku.SudokuPen(self.canvas)
 
     def draw_grid(self, show_difficulty):
-        sudoku.draw_grid(self.pen, self.grid, show_difficulty)
+        self.pen.draw_grid(self.grid, show_difficulty)
 
     def import_file(self, _):
         self.grid.csv_to_data()
@@ -43,4 +40,3 @@ class ImportButton(Button):
     def __init__(self, master):
         super().__init__(master, text='Open CSV File')
         self.filename = tk.StringVar()
-

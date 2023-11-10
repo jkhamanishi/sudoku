@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter.ttk import Notebook, Frame, Label, Button, OptionMenu
-from turtle import RawTurtle
 import sudoku
 
 
@@ -12,14 +11,13 @@ class GenerationTab(Frame):
         self.inputs.generate_button.bind("<ButtonRelease>", self.generate_puzzle)
         self.canvas = sudoku.SudokuCanvas(self)
         self.status_label = GenerationStatusLabel(self)
-        self.pen = RawTurtle(self.canvas)
-        sudoku.turtle_setup(self.pen)
+        self.pen = sudoku.SudokuPen(self.canvas)
         self.export = Export(self)
         self.export.csv.bind("<ButtonRelease>", self.export_puzzle)
 
     def generate_puzzle(self, _=None):
         self.status_label.status.set("Status: Generating...")
-        self.grid = sudoku.generate_puzzle(self.pen, self.inputs.difficulty_selector.difficulty)
+        self.grid = self.pen.generate_puzzle(self.inputs.difficulty_selector.difficulty)
         self.status_label.status.set("Status: Complete")
 
     def export_puzzle(self, _):
