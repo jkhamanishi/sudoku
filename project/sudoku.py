@@ -17,19 +17,19 @@ class DIM:
     BOTTOM = -CELL * 9 / 2
 
 
-class DifficultyOption:
-    def __init__(self, max_failed_attempts, min_num_hints):
-        self.max_failed_attempts = max_failed_attempts
-        self.min_num_hints = min_num_hints
-
-
 class DIFFICULTY:
-    OPTIONS = ["Beginner", "Easy", "Normal", "Hard", "Expert"]
-    BEGINNER = DifficultyOption(5, 45)
-    EASY = DifficultyOption(5, 40)
-    NORMAL = DifficultyOption(5, 35)
-    HARD = DifficultyOption(10, 30)
-    EXPERT = DifficultyOption(20, 17)
+    class OPTION:
+        def __init__(self, max_failed_attempts, min_num_hints):
+            self.max_failed_attempts = max_failed_attempts
+            self.min_num_hints = min_num_hints
+
+    BEGINNER = OPTION(5, 45)
+    EASY = OPTION(5, 40)
+    NORMAL = OPTION(5, 35)
+    HARD = OPTION(10, 30)
+    EXPERT = OPTION(20, 17)
+
+    OPTIONS = {"Beginner": BEGINNER, "Easy": EASY, "Normal": NORMAL, "Hard": HARD, "Expert": EXPERT}
 
     @staticmethod
     def estimate(num_hints):
@@ -229,7 +229,7 @@ class SudokuPen(RawTurtle):
         self.getscreen().update()
 
     # Generate a fully solved puzzle
-    def generate_puzzle(self, difficulty: DifficultyOption):
+    def generate_puzzle(self, difficulty: DIFFICULTY.OPTION):
         grid = Grid()
         self.draw_grid(grid)
 
