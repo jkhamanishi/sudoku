@@ -38,14 +38,14 @@ class Inputs(Frame):
 
 class DifficultyMenu(OptionMenu):
     def __init__(self, master):
-        self.options = sudoku.DIFFICULTY.OPTIONS.keys()
+        self.options = [diff.name for diff in sudoku.DIFFICULTY.OPTIONS]
         self.value = tk.StringVar(value="Normal")
         self.difficulty = sudoku.DIFFICULTY.NORMAL
         super().__init__(master, self.value, None, *self.options, command=self.set_difficulty)
 
     def set_difficulty(self, _):
         key = self.value.get()
-        self.difficulty = sudoku.DIFFICULTY.OPTIONS[key]
+        self.difficulty = next(diff for diff in sudoku.DIFFICULTY.OPTIONS if diff.name == key)
 
 
 class GenerationStatusLabel(Frame):

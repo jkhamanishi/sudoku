@@ -6,7 +6,7 @@ from copy import deepcopy
 import csv
 
 
-MAX_GENERATION_TIME = 8  # seconds
+MAX_GENERATION_TIME = 12  # seconds
 
 
 class DIM:
@@ -19,30 +19,25 @@ class DIM:
 
 class DIFFICULTY:
     class OPTION:
-        def __init__(self, max_failed_attempts, min_num_hints):
-            self.max_failed_attempts = max_failed_attempts
+        def __init__(self, name: str, min_num_hints: int, max_num_hints: int):
+            self.name = name
             self.min_num_hints = min_num_hints
+            self.max_num_hints = max_num_hints
 
-    BEGINNER = OPTION(5, 45)
-    EASY = OPTION(5, 40)
-    NORMAL = OPTION(5, 35)
-    HARD = OPTION(10, 30)
-    EXPERT = OPTION(20, 17)
+    BEGINNER = OPTION("Beginner", 45, 55)
+    EASY = OPTION("Easy", 40, 45)
+    NORMAL = OPTION("Normal", 35, 40)
+    HARD = OPTION("Hard", 30, 35)
+    EXPERT = OPTION("Expert", 17, 30)
 
-    OPTIONS = {"Beginner": BEGINNER, "Easy": EASY, "Normal": NORMAL, "Hard": HARD, "Expert": EXPERT}
+    OPTIONS = [BEGINNER, EASY, NORMAL, HARD, EXPERT]
 
     @staticmethod
     def estimate(num_hints):
-        if num_hints >= 45:
-            return "BEGINNER"
-        elif num_hints >= 40:
-            return "EASY"
-        elif num_hints >= 35:
-            return "NORMAL"
-        elif num_hints >= 30:
-            return "HARD"
-        else:
-            return "EXPERT"
+        for difficulty in DIFFICULTY.OPTIONS:
+            if difficulty.min_num_hints <= num_hints < difficulty.max_num_hints:
+                return difficulty.name.upper()
+        return "BEGINNER"
 
 
 def flatten_list_of_lists(lst):
@@ -236,9 +231,8 @@ class SudokuPen(RawTurtle):
         tic = toc = time()
         failed_attempts = 0
         num_hints = 81
-        while failed_attempts < difficulty.max_failed_attempts \
-                and num_hints > difficulty.min_num_hints \
-                and toc - tic < MAX_GENERATION_TIME:
+        while (num_hints >= difficulty.max_num_hints or toc - tic < MAX_GENERATION_TIME) \
+                and num_hints > difficulty.min_num_hints:
             grid.clear_rand_cell()
             grid_copy = deepcopy(grid)
             if grid_copy.get_number_of_solutions() != 1:
